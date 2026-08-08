@@ -90,8 +90,9 @@ should find nothing.
    content lives in an environment other than `production`.
 4. Push to `main`.
 
-If your repo isn't named `example-blog`, update `base` in [`astro.config.mjs`](astro.config.mjs)
-to match. On a custom domain, remove `base` entirely.
+This repo deploys to the custom domain in [`public/CNAME`](public/CNAME), so it sets no `base`.
+Forking to a project site (`<user>.github.io/<repo>`)? Delete `public/CNAME` and add
+`base: "/<repo>"` to [`astro.config.mjs`](astro.config.mjs).
 
 ### Rebuild when content is published
 
