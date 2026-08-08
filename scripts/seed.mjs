@@ -281,6 +281,8 @@ that is still there in a year.`,
 
 async function main() {
 	for (const template of templates) await ensureTemplate(template);
+	// The CLI (`npm create draftbase`) seeds schema only, so a new project starts empty.
+	if (process.env.SEED_TEMPLATES_ONLY) return;
 
 	const authorIds = {};
 	for (const { image, ...author } of authors) {

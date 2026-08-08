@@ -30,6 +30,10 @@ jobs:
           DRAFTBASE_API_KEY: ${{ secrets.DRAFTBASE_API_KEY }}
           # Optional. Empty falls back to "production".
           DRAFTBASE_ENVIRONMENT: ${{ vars.DRAFTBASE_ENVIRONMENT }}
+          # Set by `npm create draftbase` when it wires up GitHub Pages; empty keeps the
+          # config's own defaults.
+          SITE_URL: ${{ vars.SITE_URL }}
+          BASE_PATH: ${{ vars.BASE_PATH }}
 
   deploy:
     needs: build
