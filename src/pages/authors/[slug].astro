@@ -1,0 +1,34 @@
+---
+import { toHtml } from "@draftbase/renderer";
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getAll, getPosts, type Author } from "../../lib/draftbase";
+
+export async function getStaticPaths() {
+	const [authors, posts] = await Promise.all([getAll<Author>("author", 1), getPosts()]);
+	return authors.map((author) => ({
+		params: { slug: author.fields.slug },
+		props: {
+			author,
+			posts: posts.filter((post) => post.fields.author?._id === author._id),
+		},
+	}));
+}
+
+const { author, posts } = Astro.props;
+const bio = await toHtml(author.fields.bio ?? "");
+---
+
+<Base title={author.fields.name} description={`Posts by ${author.fields.name}.`}>
+	<header class="site">
+		{
+			author.fields.avatar?.url && (
+				<img src={author.fields.avatar.url} alt={author.fields.name} />
+			)
+		}
+		<h1>{author.fields.name}</h1>
+	</header>
+	<div class="db-content" set:html={bio} />
+	<h2 style="margin-top:2.5rem">Posts</h2>
+	{posts.map((post) => <PostCard post={post} />)}
+</Base>

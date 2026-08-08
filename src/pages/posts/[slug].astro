@@ -1,0 +1,52 @@
+---
+import { toHtml } from "@draftbase/renderer";
+import Base from "../../layouts/Base.astro";
+import { formatDate, getPosts, url } from "../../lib/draftbase";
+
+export async function getStaticPaths() {
+	const posts = await getPosts();
+	return posts.map((post) => ({ params: { slug: post.fields.slug }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const author = post.fields.author?.fields;
+// JSX inside rich text (e.g. <Callout>) is passed through as literal HTML by toHtml().
+// To render real components instead, use compileMDX() with a React or Vue island.
+const body = await toHtml(post.fields.body ?? "");
+---
+
+<Base
+	title={post.fields.title}
+	description={post.fields.excerpt}
+	image={post.fields.cover?.url}
+>
+	<h1>{post.fields.title}</h1>
+	<div class="byline">
+		{author?.avatar?.url && <img src={author.avatar.url} alt={author.name} />}
+		{author && <a href={url(`authors/${author.slug}`)}>{author.name}</a>}
+		<span>{formatDate(post.fields.publishedDate ?? post.publishedAt)}</span>
+	</div>
+	{
+		post.fields.cover?.url && (
+			<img
+				style="margin:1.5rem 0"
+				src={post.fields.cover.url}
+				alt={post.fields.cover.altText ?? post.fields.title}
+			/>
+		)
+	}
+	<div class="db-content" set:html={body} />
+	{
+		post.tags.length > 0 && (
+			<ul class="tags" style="margin-top:2rem">
+				{post.tags.map((tag) => (
+					<li>
+						<a class="tagline" href={url(`tags/${tag}`)}>
+							{tag}
+						</a>
+					</li>
+				))}
+			</ul>
+		)
+	}
+</Base>

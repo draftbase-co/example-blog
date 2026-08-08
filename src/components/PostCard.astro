@@ -1,0 +1,33 @@
+---
+import { formatDate, url, type DbEntry, type Post } from "../lib/draftbase";
+
+interface Props {
+	post: DbEntry<Post>;
+}
+
+const { post } = Astro.props;
+const author = post.fields.author?.fields;
+---
+
+<article class="card">
+	<h2><a href={url(`posts/${post.fields.slug}`)}>{post.fields.title}</a></h2>
+	<div class="byline">
+		{author?.avatar?.url && <img src={author.avatar.url} alt={author.name} loading="lazy" />}
+		{author && <a href={url(`authors/${author.slug}`)}>{author.name}</a>}
+		<span>{formatDate(post.fields.publishedDate ?? post.publishedAt)}</span>
+	</div>
+	<p class="muted">{post.fields.excerpt}</p>
+	{
+		post.tags.length > 0 && (
+			<ul class="tags">
+				{post.tags.map((tag) => (
+					<li>
+						<a class="tagline" href={url(`tags/${tag}`)}>
+							{tag}
+						</a>
+					</li>
+				))}
+			</ul>
+		)
+	}
+</article>

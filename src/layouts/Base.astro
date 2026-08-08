@@ -1,0 +1,47 @@
+---
+import "../styles/global.css";
+import { url } from "../lib/draftbase";
+
+interface Props {
+	title: string;
+	description?: string;
+	image?: string | null;
+}
+
+const { title, description, image } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title}</title>
+		{description && <meta name="description" content={description} />}
+		<link rel="canonical" href={canonical} />
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="RSS"
+			href={new URL(url("rss.xml"), Astro.site).href}
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		{description && <meta property="og:description" content={description} />}
+		{image && <meta property="og:image" content={image} />}
+		<meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+	</head>
+	<body>
+		<div class="wrap">
+			<nav class="site">
+				<a class="brand" href={url()}>The Draftbase Example Blog</a>
+				<a href={url("rss.xml")}>RSS</a>
+			</nav>
+			<slot />
+			<footer class="site">
+				Content managed in <a href="https://draftbase.co">Draftbase</a>
+			</footer>
+		</div>
+	</body>
+</html>
