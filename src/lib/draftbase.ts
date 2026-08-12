@@ -16,6 +16,10 @@ const client = createClient({
 	cacheTtlMs: 60_000,
 });
 
+export const SITE_NAME = "Field Notes";
+export const SITE_DESCRIPTION =
+	"Short, practical posts on writing things down, reviewing your week, and shipping often.";
+
 /** The API returns entry-level `tags`; the SDK's `Entry` type doesn't declare them yet. */
 export type DbEntry<Fields> = Entry<Fields> & { tags: string[] };
 
@@ -72,6 +76,12 @@ export interface Author {
 	slug: string;
 	bio: string;
 	avatar?: Media | null;
+}
+
+export interface Faq {
+	question: string;
+	answer: string;
+	order?: number;
 }
 
 export interface Post {

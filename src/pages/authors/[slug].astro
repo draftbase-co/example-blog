@@ -17,18 +17,47 @@ export async function getStaticPaths() {
 
 const { author, posts } = Astro.props;
 const bio = await toHtml(author.fields.bio ?? "");
+
+const schema = [
+	{
+		"@context": "https://schema.org",
+		"@type": "ProfilePage",
+		mainEntity: {
+			"@type": "Person",
+			name: author.fields.name,
+			url: new URL(Astro.url.pathname, Astro.site).href,
+			image: author.fields.avatar?.url ?? undefined,
+		},
+	},
+];
 ---
 
-<Base title={author.fields.name} description={`Posts by ${author.fields.name}.`}>
-	<header class="site">
+<Base
+	title={author.fields.name}
+	description={`Posts by ${author.fields.name}.`}
+	image={author.fields.avatar?.url}
+	ogType="profile"
+	schema={schema}
+>
+	<section class="hero" style="padding-bottom:24px">
 		{
 			author.fields.avatar?.url && (
-				<img src={author.fields.avatar.url} alt={author.fields.name} />
+				<img
+					src={author.fields.avatar.url}
+					alt={author.fields.name}
+					width="72"
+					height="72"
+					style="width:72px;height:72px;border-radius:var(--radius-full);object-fit:cover;margin:0 auto 16px"
+				/>
 			)
 		}
-		<h1>{author.fields.name}</h1>
-	</header>
-	<div class="db-content" set:html={bio} />
-	<h2 style="margin-top:2.5rem">Posts</h2>
-	{posts.map((post) => <PostCard post={post} />)}
+		<h1 style="font-size:var(--text-4xl)">{author.fields.name}</h1>
+		<div class="db-content muted" set:html={bio} />
+	</section>
+	<section class="wrap" style="padding-bottom:64px">
+		<h2 class="section-title">Posts</h2>
+		<ul class="posts">
+			{posts.map((post) => <PostCard post={post} />)}
+		</ul>
+	</section>
 </Base>

@@ -20,16 +20,26 @@ if (!API_KEY) {
 }
 
 async function api(path, { method = "GET", body } = {}) {
-	const res = await fetch(new URL(path, BASE_URL), {
-		method,
-		headers: {
-			Authorization: `Bearer ${API_KEY}`,
-			...(body ? { "Content-Type": "application/json" } : {}),
-		},
-		body: body ? JSON.stringify(body) : undefined,
-	});
-	if (!res.ok) throw new Error(`${method} ${path} -> ${res.status} ${await res.text()}`);
-	return res.status === 204 ? null : res.json();
+	// A full seed is a burst of writes, so the API's rate limiter is expected rather than
+	// exceptional — back off and retry instead of leaving the org half-seeded.
+	for (let attempt = 0; ; attempt++) {
+		const res = await fetch(new URL(path, BASE_URL), {
+			method,
+			headers: {
+				Authorization: `Bearer ${API_KEY}`,
+				...(body ? { "Content-Type": "application/json" } : {}),
+			},
+			body: body ? JSON.stringify(body) : undefined,
+		});
+		if (res.status === 429 && attempt < 5) {
+			const seconds = Number(res.headers.get("retry-after")) || 2 ** attempt;
+			console.log(`rate limited, retrying in ${seconds}s`);
+			await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+			continue;
+		}
+		if (!res.ok) throw new Error(`${method} ${path} -> ${res.status} ${await res.text()}`);
+		return res.status === 204 ? null : res.json();
+	}
 }
 
 /** A template's key is derived from its name ("Blog Post" -> "blogPost"), and is what
@@ -75,6 +85,14 @@ async function ensureEntry(templateId, titleField, fields, tags = []) {
 	const list = await api(`/entries?envId=${ENV_ID}&templateId=${templateId}&limit=100`);
 	const match = list.items.find((e) => e.fields[titleField] === fields[titleField]);
 	if (match) {
+		// Re-publish rather than skip: a previous run interrupted between create and publish
+		// leaves a draft the site cannot see.
+		if (match.status !== "published") {
+			await api(`/entries/${match._id}/status`, {
+				method: "PATCH",
+				body: { status: "published" },
+			});
+		}
 		console.log(`entry "${fields[titleField]}" already exists`);
 		return match._id;
 	}
@@ -119,6 +137,41 @@ const templates = [
 				referenceTemplateId: "author",
 			},
 		],
+	},
+	{
+		// Rendered on the home page and emitted as FAQPage JSON-LD, so the answers an
+		// assistant quotes are edited in the CMS rather than hardcoded in the template.
+		key: "faq",
+		name: "Faq",
+		titleField: "question",
+		fields: [
+			{ key: "question", label: "Question", type: "text", required: true },
+			{ key: "answer", label: "Answer", type: "text", multiline: true, required: true },
+			{ key: "order", label: "Order", type: "number" },
+		],
+	},
+];
+
+const faqs = [
+	{
+		question: "How often do you publish?",
+		answer: "A new post goes up every other week, give or take.",
+		order: 1,
+	},
+	{
+		question: "Is there an RSS feed?",
+		answer: "Yes. The feed is at /rss.xml and is linked from the header and the footer.",
+		order: 2,
+	},
+	{
+		question: "Can I contribute a guest post?",
+		answer: "Occasionally. Send a short pitch and a writing sample first.",
+		order: 3,
+	},
+	{
+		question: "How is this site built?",
+		answer: "Astro renders it to static HTML at build time, pulling posts from a headless CMS's delivery API. There is no server and no client-side data fetching.",
+		order: 4,
 	},
 ];
 
@@ -256,8 +309,7 @@ that screen before picking a number.`,
 		tags: ["process"],
 		publishedDate: "2026-03-28",
 		image: "https://picsum.photos/seed/boring/1200/675",
-		excerpt:
-			"The abstraction you skip today is the one you would have got wrong anyway.",
+		excerpt: "The abstraction you skip today is the one you would have got wrong anyway.",
 		body: `Nobody has ever been paged because a function was too obvious.
 
 ## Two implementations, then a pattern
@@ -291,18 +343,11 @@ async function main() {
 	}
 
 	for (const { image, author, tags, ...post } of posts) {
-		const cover = await uploadImage(
-			image,
-			`${post.slug}.jpg`,
-			`Cover image for ${post.title}`,
-		);
-		await ensureEntry(
-			"blogPost",
-			"title",
-			{ ...post, cover, author: authorIds[author] },
-			tags,
-		);
+		const cover = await uploadImage(image, `${post.slug}.jpg`, `Cover image for ${post.title}`);
+		await ensureEntry("blogPost", "title", { ...post, cover, author: authorIds[author] }, tags);
 	}
+
+	for (const faq of faqs) await ensureEntry("faq", "question", faq);
 
 	console.log("\nSeed complete. Run `npm run dev`.");
 }

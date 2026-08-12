@@ -7,27 +7,24 @@ interface Props {
 
 const { post } = Astro.props;
 const author = post.fields.author?.fields;
+const date = post.fields.publishedDate ?? post.publishedAt;
 ---
 
-<article class="card">
-	<h2><a href={url(`posts/${post.fields.slug}`)}>{post.fields.title}</a></h2>
-	<div class="byline">
-		{author?.avatar?.url && <img src={author.avatar.url} alt={author.name} loading="lazy" />}
-		{author && <a href={url(`authors/${author.slug}`)}>{author.name}</a>}
-		<span>{formatDate(post.fields.publishedDate ?? post.publishedAt)}</span>
-	</div>
-	<p class="muted">{post.fields.excerpt}</p>
-	{
-		post.tags.length > 0 && (
-			<ul class="tags">
-				{post.tags.map((tag) => (
-					<li>
-						<a class="tagline" href={url(`tags/${tag}`)}>
-							{tag}
-						</a>
-					</li>
-				))}
-			</ul>
-		)
-	}
-</article>
+<li>
+	<article class="card">
+		{
+			post.tags.length > 0 && (
+				<a class="tagline" href={url(`tags/${post.tags[0]}`)}>
+					{post.tags[0]}
+				</a>
+			)
+		}
+		<h2><a href={url(`posts/${post.fields.slug}`)}>{post.fields.title}</a></h2>
+		<p>{post.fields.excerpt}</p>
+		<div class="byline">
+			{author?.avatar?.url && <img src={author.avatar.url} alt={author.name} loading="lazy" />}
+			{author && <a href={url(`authors/${author.slug}`)}>{author.name}</a>}
+			{date && <time datetime={new Date(date).toISOString()}>{formatDate(date)}</time>}
+		</div>
+	</article>
+</li>

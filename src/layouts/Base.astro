@@ -1,15 +1,19 @@
 ---
 import "../styles/global.css";
-import { url } from "../lib/draftbase";
+import { SITE_NAME, url } from "../lib/draftbase";
 
 interface Props {
 	title: string;
 	description?: string;
 	image?: string | null;
+	ogType?: string;
+	/** JSON-LD blocks for this page. Emitted verbatim into <head>. */
+	schema?: Record<string, unknown>[];
 }
 
-const { title, description, image } = Astro.props;
+const { title, description, image, ogType = "website", schema = [] } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const home = url();
 ---
 
 <!doctype html>
@@ -23,25 +27,60 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 		<link
 			rel="alternate"
 			type="application/rss+xml"
-			title="RSS"
+			title={SITE_NAME}
 			href={new URL(url("rss.xml"), Astro.site).href}
 		/>
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content={ogType} />
+		<meta property="og:site_name" content={SITE_NAME} />
 		<meta property="og:title" content={title} />
+		<meta property="og:url" content={canonical} />
 		{description && <meta property="og:description" content={description} />}
 		{image && <meta property="og:image" content={image} />}
 		<meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+		{
+			schema.map((block) => (
+				<script
+					type="application/ld+json"
+					set:html={JSON.stringify(block)}
+					is:inline
+				/>
+			))
+		}
 	</head>
 	<body>
-		<div class="wrap">
-			<nav class="site">
-				<a class="brand" href={url()}>The Draftbase Example Blog</a>
-				<a href={url("rss.xml")}>RSS</a>
-			</nav>
-			<slot />
-			<footer class="site">
-				Content managed in <a href="https://draftbase.co">Draftbase</a>
-			</footer>
+		<div class="banner">
+			Example project built with <a
+				href="https://draftbase.co"
+				target="_blank"
+				rel="noopener">Draftbase CMS</a
+			> — a starter you can customize.
 		</div>
+
+		<header class="site">
+			<div>
+				<a class="brand" href={home}>{SITE_NAME}</a>
+				<nav>
+					<a href={home}>Posts</a>
+					<a href={`${home}#faq`}>FAQ</a>
+					<a href={url("rss.xml")}>RSS</a>
+				</nav>
+			</div>
+		</header>
+
+		<main><slot /></main>
+
+		<footer class="site">
+			<p>
+				© {new Date().getFullYear()}
+				{SITE_NAME}. <a href={url("rss.xml")}>RSS</a>
+			</p>
+			<p>
+				Built as an example with <a
+					href="https://draftbase.co"
+					target="_blank"
+					rel="noopener">Draftbase CMS</a
+				>
+			</p>
+		</footer>
 	</body>
 </html>

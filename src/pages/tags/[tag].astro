@@ -1,7 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
-import { getPosts } from "../../lib/draftbase";
+import { getPosts, url } from "../../lib/draftbase";
 
 // Tags live on the entry itself (`entry.tags`), not in a field, so no extra template is needed.
 export async function getStaticPaths() {
@@ -14,10 +14,38 @@ export async function getStaticPaths() {
 }
 
 const { tag, posts } = Astro.props;
+
+const schema = [
+	{
+		"@context": "https://schema.org",
+		"@type": "CollectionPage",
+		name: `Posts tagged ${tag}`,
+		url: new URL(Astro.url.pathname, Astro.site).href,
+		mainEntity: {
+			"@type": "ItemList",
+			itemListElement: posts.map((post, index) => ({
+				"@type": "ListItem",
+				position: index + 1,
+				name: post.fields.title,
+				url: new URL(url(`posts/${post.fields.slug}`), Astro.site).href,
+			})),
+		},
+	},
+];
 ---
 
-<Base title={`Posts tagged “${tag}”`} description={`Every post tagged ${tag}.`}>
-	<h1>Tagged “{tag}”</h1>
-	<p class="muted">{posts.length} post{posts.length === 1 ? "" : "s"}</p>
-	{posts.map((post) => <PostCard post={post} />)}
+<Base
+	title={`Posts tagged “${tag}”`}
+	description={`Every post tagged ${tag}.`}
+	schema={schema}
+>
+	<section class="hero" style="padding-bottom:24px">
+		<h1 style="font-size:var(--text-4xl)">Tagged “{tag}”</h1>
+		<p>{posts.length} post{posts.length === 1 ? "" : "s"}</p>
+	</section>
+	<section class="wrap" style="padding-bottom:64px">
+		<ul class="posts">
+			{posts.map((post) => <PostCard post={post} />)}
+		</ul>
+	</section>
 </Base>

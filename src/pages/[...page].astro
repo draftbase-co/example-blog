@@ -2,37 +2,109 @@
 import type { GetStaticPaths, Page } from "astro";
 import Base from "../layouts/Base.astro";
 import PostCard from "../components/PostCard.astro";
-import { getPosts, url, type DbEntry, type Post } from "../lib/draftbase";
+import {
+	SITE_DESCRIPTION,
+	SITE_NAME,
+	getAll,
+	getPosts,
+	url,
+	type DbEntry,
+	type Faq,
+	type Post,
+} from "../lib/draftbase";
 
 // Emits `/` for page 1 and `/2`, `/3`, ... for the rest.
 export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
-	const posts = await getPosts();
-	return paginate(posts, { pageSize: 5 });
+	const [posts, faqs] = await Promise.all([getPosts(), getAll<Faq>("faq")]);
+	const ordered = faqs.sort((a, b) => (a.fields.order ?? 0) - (b.fields.order ?? 0));
+	return paginate(posts, { pageSize: 5, props: { faqs: ordered } });
 };
 
-const { page } = Astro.props as { page: Page<DbEntry<Post>> };
+const { page, faqs } = Astro.props as { page: Page<DbEntry<Post>>; faqs: DbEntry<Faq>[] };
+const site = new URL(url(), Astro.site).href;
+const isFirstPage = page.currentPage === 1;
+
+const schema: Record<string, unknown>[] = [
+	{
+		"@context": "https://schema.org",
+		"@type": "Blog",
+		name: SITE_NAME,
+		description: SITE_DESCRIPTION,
+		url: site,
+		blogPost: page.data.map((post) => ({
+			"@type": "BlogPosting",
+			headline: post.fields.title,
+			description: post.fields.excerpt,
+			datePublished: post.fields.publishedDate ?? post.publishedAt,
+			url: new URL(url(`posts/${post.fields.slug}`), Astro.site).href,
+		})),
+	},
+];
+// Only the first page carries the FAQ block — duplicating it across the archive would put
+// the same answers on several URLs.
+if (isFirstPage && faqs.length > 0) {
+	schema.push({
+		"@context": "https://schema.org",
+		"@type": "FAQPage",
+		mainEntity: faqs.map((faq) => ({
+			"@type": "Question",
+			name: faq.fields.question,
+			acceptedAnswer: { "@type": "Answer", text: faq.fields.answer },
+		})),
+	});
+}
 ---
 
 <Base
-	title={page.currentPage === 1 ? "The Draftbase Example Blog" : `Page ${page.currentPage}`}
-	description="A statically generated blog powered by Draftbase."
+	title={isFirstPage ? `${SITE_NAME} — a blog about building things` : `${SITE_NAME} — page ${page.currentPage}`}
+	description={SITE_DESCRIPTION}
+	schema={schema}
 >
-	{page.data.map((post) => <PostCard post={post} />)}
+	<section class="hero">
+		<h1>Notes on building things well</h1>
+		<p>{SITE_DESCRIPTION}</p>
+	</section>
+
+	<section id="posts" class="wrap" style="padding-bottom:48px">
+		<ul class="posts">
+			{page.data.map((post) => <PostCard post={post} />)}
+		</ul>
+
+		{
+			page.data.length === 0 && (
+				<p class="muted">
+					No published posts yet. Run <code>npm run seed</code>.
+				</p>
+			)
+		}
+
+		<nav class="pagination">
+			{page.url.prev ? <a href={page.url.prev}>← Newer</a> : <span />}
+			{page.url.next ? <a href={page.url.next}>Older →</a> : <span />}
+		</nav>
+	</section>
+
+	<section id="subscribe" class="panel">
+		<div>
+			<h2>Get new posts by email</h2>
+			<p class="muted">No spam. Unsubscribe anytime.</p>
+			<p>
+				<a class="button" href={url("rss.xml")}>Subscribe via RSS</a>
+			</p>
+		</div>
+	</section>
 
 	{
-		page.data.length === 0 && (
-			<p class="muted">
-				No published posts yet. Run <code>npm run seed</code>.
-			</p>
+		isFirstPage && faqs.length > 0 && (
+			<section id="faq" class="faq">
+				<h2 class="section-title">Frequently asked questions</h2>
+				{faqs.map((faq) => (
+					<details>
+						<summary>{faq.fields.question}</summary>
+						<div>{faq.fields.answer}</div>
+					</details>
+				))}
+			</section>
 		)
 	}
-
-	<nav class="pagination">
-		{page.url.prev ? <a href={page.url.prev}>← Newer</a> : <span />}
-		{page.url.next ? <a href={page.url.next}>Older →</a> : <span />}
-	</nav>
-
-	<p class="muted" style="margin-top:2rem">
-		<a href={url("rss.xml")}>Subscribe via RSS</a>
-	</p>
 </Base>
