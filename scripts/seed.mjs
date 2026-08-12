@@ -9,9 +9,9 @@
  *
  * Safe to re-run: existing templates are left alone and entries are matched by title.
  */
-const BASE_URL = process.env.DRAFTBASE_API_URL ?? "https://api.draftbase.co";
+const BASE_URL = process.env.DRAFTBASE_API_URL || "https://api.draftbase.co";
 const API_KEY = process.env.DRAFTBASE_MANAGEMENT_API_KEY;
-const ENV_ID = process.env.DRAFTBASE_ENVIRONMENT ?? "production";
+const ENV_ID = process.env.DRAFTBASE_ENVIRONMENT || "production";
 const LOCALE = "en-US";
 
 if (!API_KEY) {
