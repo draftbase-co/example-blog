@@ -1,0 +1,106 @@
+[
+	{
+		"key": "author",
+		"name": "Author",
+		"titleField": "name",
+		"fields": [
+			{
+				"key": "name",
+				"label": "Name",
+				"type": "text",
+				"required": true
+			},
+			{
+				"key": "slug",
+				"label": "Slug",
+				"type": "text",
+				"required": true,
+				"isSlug": true
+			},
+			{
+				"key": "bio",
+				"label": "Bio",
+				"type": "richText"
+			},
+			{
+				"key": "avatar",
+				"label": "Avatar",
+				"type": "media"
+			}
+		]
+	},
+	{
+		"key": "blogPost",
+		"name": "Blog Post",
+		"titleField": "title",
+		"fields": [
+			{
+				"key": "title",
+				"label": "Title",
+				"type": "text",
+				"required": true
+			},
+			{
+				"key": "slug",
+				"label": "Slug",
+				"type": "text",
+				"required": true,
+				"isSlug": true
+			},
+			{
+				"key": "excerpt",
+				"label": "Excerpt",
+				"type": "text",
+				"multiline": true,
+				"maxLength": 240
+			},
+			{
+				"key": "body",
+				"label": "Body",
+				"type": "richText",
+				"required": true
+			},
+			{
+				"key": "cover",
+				"label": "Cover image",
+				"type": "media"
+			},
+			{
+				"key": "publishedDate",
+				"label": "Published date",
+				"type": "date"
+			},
+			{
+				"key": "author",
+				"label": "Author",
+				"type": "reference",
+				"referenceTemplateId": "author"
+			}
+		]
+	},
+	{
+		"key": "faq",
+		"name": "Faq",
+		"titleField": "question",
+		"fields": [
+			{
+				"key": "question",
+				"label": "Question",
+				"type": "text",
+				"required": true
+			},
+			{
+				"key": "answer",
+				"label": "Answer",
+				"type": "text",
+				"multiline": true,
+				"required": true
+			},
+			{
+				"key": "order",
+				"label": "Order",
+				"type": "number"
+			}
+		]
+	}
+]
