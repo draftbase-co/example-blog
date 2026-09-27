@@ -9,6 +9,7 @@
  *
  * Safe to re-run: existing templates are left alone and entries are matched by title.
  */
+import { readFileSync } from "node:fs";
 const BASE_URL = process.env.DRAFTBASE_API_URL || "https://api.draftbase.co";
 const API_KEY = process.env.DRAFTBASE_MANAGEMENT_API_KEY;
 const ENV_ID = process.env.DRAFTBASE_ENVIRONMENT || "production";
@@ -105,52 +106,11 @@ async function ensureEntry(templateId, titleField, fields, tags = []) {
 	return id;
 }
 
-const templates = [
-	{
-		key: "author",
-		name: "Author",
-		titleField: "name",
-		fields: [
-			{ key: "name", label: "Name", type: "text", required: true },
-			{ key: "slug", label: "Slug", type: "text", required: true, isSlug: true },
-			{ key: "bio", label: "Bio", type: "richText" },
-			{ key: "avatar", label: "Avatar", type: "media" },
-		],
-	},
-	{
-		key: "blogPost",
-		name: "Blog Post",
-		titleField: "title",
-		fields: [
-			{ key: "title", label: "Title", type: "text", required: true },
-			{ key: "slug", label: "Slug", type: "text", required: true, isSlug: true },
-			{ key: "excerpt", label: "Excerpt", type: "text", multiline: true, maxLength: 240 },
-			{ key: "body", label: "Body", type: "richText", required: true },
-			{ key: "cover", label: "Cover image", type: "media" },
-			{ key: "publishedDate", label: "Published date", type: "date" },
-			// A reference points at another template by key. `include: 1` on the delivery
-			// call swaps the stored id for the full author entry.
-			{
-				key: "author",
-				label: "Author",
-				type: "reference",
-				referenceTemplateId: "author",
-			},
-		],
-	},
-	{
-		// Rendered on the home page and emitted as FAQPage JSON-LD, so the answers an
-		// assistant quotes are edited in the CMS rather than hardcoded in the template.
-		key: "faq",
-		name: "Faq",
-		titleField: "question",
-		fields: [
-			{ key: "question", label: "Question", type: "text", required: true },
-			{ key: "answer", label: "Answer", type: "text", multiline: true, required: true },
-			{ key: "order", label: "Order", type: "number" },
-		],
-	},
-];
+// Shared with the Draftbase web panel, which creates these same templates when it deploys
+// this example to GitHub Pages — edit the JSON, not a copy here.
+const templates = JSON.parse(
+	readFileSync(new URL("../draftbase.templates.json", import.meta.url), "utf8"),
+);
 
 const faqs = [
 	{
