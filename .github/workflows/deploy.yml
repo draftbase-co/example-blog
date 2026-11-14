@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: withastro/action@v3
+        with:
+          node-version: 24
         env:
           # Delivery-scoped, read-only. Read by Node during `astro build` and never
           # written into the generated HTML or JS.
