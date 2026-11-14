@@ -1,5 +1,7 @@
 # Draftbase example — Blog
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdraftbase-co%2Fexample-blog&env=DRAFTBASE_API_KEY&envDescription=Delivery-scoped%20Draftbase%20API%20key.%20Run%20npm%20run%20seed%20once%20first%20so%20the%20templates%20exist.&envLink=https%3A%2F%2Fdraftbase.co%2Fdocs&project-name=draftbase-blog&repository-name=draftbase-blog&demo-title=Draftbase%20Blog&demo-url=https%3A%2F%2Fdemo-blog.draftbase.co)
+
 A blog with authors, tags, pagination and an RSS feed, built with [Astro](https://astro.build)
 and [Draftbase](https://draftbase.co). Posts are fetched at build time and deployed to GitHub
 Pages as static HTML — no server, no runtime API calls.
